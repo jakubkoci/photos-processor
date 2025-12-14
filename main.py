@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Script to extract DateTime information from JPEG photos in multiple folders
+Script to copy photos to an 'ordered' folder and rename them based on DateTimeOriginal
 """
 
 import os
 import sys
+import shutil
 from PIL import Image
 from PIL.ExifTags import TAGS
 from pathlib import Path
@@ -28,19 +29,37 @@ def main():
         print(f"⚠️  No folder paths found in '{input_file}'")
         sys.exit(1)
 
-    print("JPEG Photo DateTime Extractor")
+    # Create ordered directory
+    ordered_dir = "ordered"
+    os.makedirs(ordered_dir, exist_ok=True)
+
+    print("Photo Organizer - Copy by DateTimeOriginal")
     print("=" * 80)
-    print(f"\nReading folder paths from '{input_file}'\n")
+    print(f"\nReading folder paths from '{input_file}'")
+    print(f"Output directory: {ordered_dir}\n")
 
-    process_folders(folders)
+    process_folders(folders, ordered_dir)
 
 
-def process_folders(folder_paths):
+def process_folders(folder_paths, ordered_dir):
     """
-    Process all photos in the given folders
+    Process all photos in the given folders and copy them to ordered directory
     """
     # Common image extensions
-    image_extensions = {".jpg", ".jpeg", ".JPG", ".JPEG"}
+    image_extensions = {
+        ".jpg",
+        ".jpeg",
+        ".JPG",
+        ".JPEG",
+        ".png",
+        ".PNG",
+        ".heic",
+        ".HEIC",
+    }
+
+    total_copied = 0
+    total_skipped = 0
+    filename_counter = {}  # Track duplicate filenames
 
     for folder_path in folder_paths:
         print(f"\n{'=' * 80}")
@@ -63,21 +82,52 @@ def process_folders(folder_paths):
                     relative_path = os.path.relpath(file_path, folder_path)
 
                     # Get DateTime
-                    datetime_value = get_photo_datetime(file_path)
+                    datetime_info = get_photo_datetime(file_path)
 
-                    if datetime_value:
-                        print(f"📷 {relative_path}")
-                        for key, value in datetime_value.items():
-                            date_utc = convert_to_utc_format(value)
-                            print(f"{key} {date_utc}")
+                    if datetime_info and datetime_info.get("DateTimeOriginal"):
+                        datetime_original = datetime_info["DateTimeOriginal"]
+                        formatted_date = convert_to_utc_format(datetime_original)
+
+                        if formatted_date:
+                            # Create filename with .jpeg extension
+                            base_filename = formatted_date
+
+                            # Handle duplicate filenames
+                            if base_filename in filename_counter:
+                                filename_counter[base_filename] += 1
+                                new_filename = f"{base_filename}_{filename_counter[base_filename]}.jpeg"
+                            else:
+                                filename_counter[base_filename] = 0
+                                new_filename = f"{base_filename}.jpeg"
+
+                            # Copy file to ordered directory
+                            dest_path = os.path.join(ordered_dir, new_filename)
+                            shutil.copy2(file_path, dest_path)
+
+                            print(f"✓ {relative_path}")
+                            print(f"  -> {new_filename}\n")
+                            total_copied += 1
+                        else:
+                            print(f"⚠️  {relative_path}")
+                            print(
+                                f"  Could not parse DateTimeOriginal: {datetime_original}\n"
+                            )
+                            total_skipped += 1
                     else:
-                        print(f"📷 {relative_path}")
-                        print("   DateTime: Not found in EXIF data\n")
+                        print(f"⚠️  {relative_path}")
+                        print("  DateTimeOriginal not found in EXIF data\n")
+                        total_skipped += 1
 
         if photo_count == 0:
-            print("No JPEG photos found in this folder.\n")
+            print("No photos found in this folder.\n")
         else:
-            print(f"Total photos processed: {photo_count}\n")
+            print(f"Photos processed: {photo_count}\n")
+
+    print(f"\n{'=' * 80}")
+    print("Summary:")
+    print(f"  Total copied: {total_copied}")
+    print(f"  Total skipped: {total_skipped}")
+    print(f"{'=' * 80}\n")
 
 
 def get_photo_datetime(image_path):
