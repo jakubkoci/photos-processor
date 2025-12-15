@@ -13,13 +13,13 @@ from pathlib import Path
 from datetime import datetime
 
 
-def copy_photos(input_file: str = "input", ordered_dir: str = "ordered") -> None:
+def copy_photos(input_file: str = "input", output_dir: str = "ordered") -> None:
     """
     Copy photos to an ordered folder and rename them based on DateTimeOriginal
 
     Args:
         input_file: Path to the input file containing folder paths (one per line)
-        ordered_dir: Directory where organized photos will be copied
+        output_dir: Directory where organized photos will be copied
     """
     if not os.path.exists(input_file):
         print(f"⚠️  Input file '{input_file}' not found!")
@@ -34,20 +34,20 @@ def copy_photos(input_file: str = "input", ordered_dir: str = "ordered") -> None
         print(f"⚠️  No folder paths found in '{input_file}'")
         sys.exit(1)
 
-    # Create ordered directory
-    os.makedirs(ordered_dir, exist_ok=True)
+    # Create output directory
+    os.makedirs(output_dir, exist_ok=True)
 
     print("Photo Organizer - Copy by DateTimeOriginal")
     print("=" * 80)
     print(f"\nReading folder paths from '{input_file}'")
-    print(f"Output directory: {ordered_dir}\n")
+    print(f"Output directory: {output_dir}\n")
 
-    process_folders(folders, ordered_dir)
+    process_folders(folders, output_dir)
 
 
-def process_folders(folder_paths: list[str], ordered_dir: str) -> None:
+def process_folders(folder_paths: list[str], output_dir: str) -> None:
     """
-    Process all photos in the given folders and copy them to ordered directory
+    Process all photos in the given folders and copy them to output directory
     """
     # Common image extensions
     image_extensions = {
@@ -88,7 +88,9 @@ def process_folders(folder_paths: list[str], ordered_dir: str) -> None:
                     # Get DateTime
                     datetime_info = get_photo_datetime(file_path)
 
-                    datetime_original = datetime_info.get("DateTimeOriginal") if datetime_info else None
+                    datetime_original = (
+                        datetime_info.get("DateTimeOriginal") if datetime_info else None
+                    )
                     if datetime_original:
                         formatted_date = convert_to_utc_format(datetime_original)
 
@@ -104,8 +106,8 @@ def process_folders(folder_paths: list[str], ordered_dir: str) -> None:
                                 filename_counter[base_filename] = 0
                                 new_filename = f"{base_filename}.jpeg"
 
-                            # Copy file to ordered directory
-                            dest_path = os.path.join(ordered_dir, new_filename)
+                            # Copy file to output directory
+                            dest_path = os.path.join(output_dir, new_filename)
                             shutil.copy2(file_path, dest_path)
 
                             print(f"✓ {relative_path}")

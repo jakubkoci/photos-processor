@@ -9,41 +9,41 @@ from typing import Optional
 from PIL import Image
 
 
-def count_photo_orientations(ordered_dir: str = "ordered") -> dict[str, int]:
+def count_photo_orientations(photos_dir: str = "ordered") -> dict[str, int]:
     """
-    Count portrait and landscape photos in the ordered directory
+    Count portrait and landscape photos in the photos directory
 
     Args:
-        ordered_dir: Directory containing organized photos
+        photos_dir: Directory containing photos to analyze
 
     Returns:
         dict: Dictionary with counts {'portrait': int, 'landscape': int, 'total': int}
     """
-    orientation_counts = analyze_photos(ordered_dir)
+    orientation_counts = analyze_photos(photos_dir)
     print_orientation_summary(orientation_counts)
     return orientation_counts
 
 
-def analyze_photos(ordered_dir: str) -> dict[str, int]:
+def analyze_photos(photos_dir: str) -> dict[str, int]:
     """
-    Analyze all photos in the ordered directory and determine their orientation
+    Analyze all photos in the photos directory and determine their orientation
 
     Args:
-        ordered_dir: Directory containing organized photos
+        photos_dir: Directory containing photos to analyze
 
     Returns:
         dict: Dictionary with counts {'portrait': int, 'landscape': int, 'total': int}
     """
-    if not os.path.exists(ordered_dir):
-        print(f"⚠️  Directory '{ordered_dir}' not found!")
+    if not os.path.exists(photos_dir):
+        print(f"⚠️  Directory '{photos_dir}' not found!")
         return {"portrait": 0, "landscape": 0, "total": 0}
 
     image_extensions = {".jpg", ".jpeg", ".png", ".heic"}
     counts = {"portrait": 0, "landscape": 0, "total": 0}
 
-    for file in os.listdir(ordered_dir):
+    for file in os.listdir(photos_dir):
         if Path(file).suffix.lower() in image_extensions:
-            file_path = os.path.join(ordered_dir, file)
+            file_path = os.path.join(photos_dir, file)
             orientation = get_photo_orientation(file_path)
 
             if orientation:
