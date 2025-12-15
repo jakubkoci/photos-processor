@@ -143,9 +143,9 @@ def get_photo_datetime(image_path: str) -> dict[str, Optional[str]]:
     """
     try:
         img = Image.open(image_path)
-        exif_data = img.getexif()
+        exif_data = img._getexif()
 
-        datetime_info: dict[str, Optional[str]] = {
+        datetime_info = {
             # "DateTime": None,
             "DateTimeOriginal": None,
             # "DateTimeDigitized": None,
@@ -159,8 +159,8 @@ def get_photo_datetime(image_path: str) -> dict[str, Optional[str]]:
                     datetime_info[tag] = value
 
         return datetime_info
-    except Exception:
-        return {"DateTimeOriginal": None}
+    except Exception as e:
+        return {"Error": str(e)}
 
 
 def convert_to_utc_format(exif_datetime: str) -> Optional[str]:
