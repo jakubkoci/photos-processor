@@ -6,13 +6,14 @@ Module for copying and renaming photos based on EXIF DateTimeOriginal
 import os
 import sys
 import shutil
+from typing import Optional
 from PIL import Image
 from PIL.ExifTags import TAGS
 from pathlib import Path
 from datetime import datetime
 
 
-def copy_photos(input_file="input", ordered_dir="ordered"):
+def copy_photos(input_file: str = "input", ordered_dir: str = "ordered") -> None:
     """
     Copy photos to an ordered folder and rename them based on DateTimeOriginal
 
@@ -44,7 +45,7 @@ def copy_photos(input_file="input", ordered_dir="ordered"):
     process_folders(folders, ordered_dir)
 
 
-def process_folders(folder_paths, ordered_dir):
+def process_folders(folder_paths: list[str], ordered_dir: str) -> None:
     """
     Process all photos in the given folders and copy them to ordered directory
     """
@@ -76,7 +77,7 @@ def process_folders(folder_paths, ordered_dir):
 
         # Walk through the folder and subfolders
         photo_count = 0
-        for root, dirs, files in os.walk(folder_path):
+        for root, _dirs, files in os.walk(folder_path):
             for file in files:
                 # Check if file has an image extension
                 if Path(file).suffix in image_extensions:
@@ -87,8 +88,8 @@ def process_folders(folder_paths, ordered_dir):
                     # Get DateTime
                     datetime_info = get_photo_datetime(file_path)
 
-                    if datetime_info and datetime_info.get("DateTimeOriginal"):
-                        datetime_original = datetime_info["DateTimeOriginal"]
+                    datetime_original = datetime_info.get("DateTimeOriginal") if datetime_info else None
+                    if datetime_original:
                         formatted_date = convert_to_utc_format(datetime_original)
 
                         if formatted_date:
@@ -133,16 +134,16 @@ def process_folders(folder_paths, ordered_dir):
     print(f"{'=' * 80}\n")
 
 
-def get_photo_datetime(image_path):
+def get_photo_datetime(image_path: str) -> dict[str, Optional[str]]:
     """
     Extract all DateTime fields from a photo's EXIF data
     Returns a dictionary with DateTime, DateTimeOriginal, and DateTimeDigitized
     """
     try:
         img = Image.open(image_path)
-        exif_data = img._getexif()
+        exif_data = img.getexif()
 
-        datetime_info = {
+        datetime_info: dict[str, Optional[str]] = {
             # "DateTime": None,
             "DateTimeOriginal": None,
             # "DateTimeDigitized": None,
@@ -156,11 +157,11 @@ def get_photo_datetime(image_path):
                     datetime_info[tag] = value
 
         return datetime_info
-    except Exception as e:
-        return {"Error": str(e)}
+    except Exception:
+        return {"DateTimeOriginal": None}
 
 
-def convert_to_utc_format(exif_datetime):
+def convert_to_utc_format(exif_datetime: str) -> Optional[str]:
     """
     Convert EXIF datetime string to UTC format: yyyy-mm-dd-hh-mm-ss
     EXIF format is typically: "2024:03:15 14:30:22"
@@ -170,5 +171,5 @@ def convert_to_utc_format(exif_datetime):
         dt = datetime.strptime(exif_datetime, "%Y:%m:%d %H:%M:%S")
         # Format to UTC format
         return dt.strftime("%Y-%m-%d-%H-%M-%S")
-    except Exception as e:
+    except Exception:
         return None

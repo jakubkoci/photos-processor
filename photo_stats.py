@@ -5,10 +5,11 @@ Module for analyzing photo statistics in the ordered folder
 
 import os
 from pathlib import Path
+from typing import Optional
 from PIL import Image
 
 
-def count_photo_orientations(ordered_dir="ordered"):
+def count_photo_orientations(ordered_dir: str = "ordered") -> dict[str, int]:
     """
     Count portrait and landscape photos in the ordered directory
 
@@ -23,7 +24,7 @@ def count_photo_orientations(ordered_dir="ordered"):
     return orientation_counts
 
 
-def analyze_photos(ordered_dir):
+def analyze_photos(ordered_dir: str) -> dict[str, int]:
     """
     Analyze all photos in the ordered directory and determine their orientation
 
@@ -52,7 +53,7 @@ def analyze_photos(ordered_dir):
     return counts
 
 
-def get_photo_orientation(image_path):
+def get_photo_orientation(image_path: str) -> Optional[str]:
     """
     Determine if a photo is portrait or landscape based on dimensions
 
@@ -75,7 +76,7 @@ def get_photo_orientation(image_path):
         return None
 
 
-def print_orientation_summary(counts):
+def print_orientation_summary(counts: dict[str, int]) -> None:
     """
     Print a formatted summary of orientation counts
 
