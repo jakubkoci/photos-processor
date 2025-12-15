@@ -8,7 +8,6 @@ import sys
 import shutil
 from typing import Optional
 from PIL import Image
-from PIL.ExifTags import TAGS
 from pathlib import Path
 from datetime import datetime
 
@@ -86,13 +85,10 @@ def process_folders(folder_paths: list[str], output_dir: str) -> None:
                     relative_path = os.path.relpath(file_path, folder_path)
 
                     # Get DateTime
-                    datetime_info = get_photo_datetime(file_path)
+                    datetime_original = get_photo_datetime(file_path)
 
-                    datetime_original = (
-                        datetime_info.get("DateTimeOriginal") if datetime_info else None
-                    )
                     if datetime_original:
-                        formatted_date = convert_to_utc_format(datetime_original)
+                        formatted_date = convert_to_filename_format(datetime_original)
 
                         if formatted_date:
                             # Create filename with .jpeg extension
@@ -131,42 +127,41 @@ def process_folders(folder_paths: list[str], output_dir: str) -> None:
     print(f"{'=' * 80}\n")
 
 
-def get_photo_datetime(image_path: str) -> dict[str, Optional[str]]:
+def get_photo_datetime(image_path: str) -> Optional[str]:
     """
     Extract all DateTime fields from a photo's EXIF data
     Returns a dictionary with DateTime, DateTimeOriginal, and DateTimeDigitized
     """
     try:
+        date_time_orignial = None
         img = Image.open(image_path)
-        exif_data = img._getexif()
-
-        datetime_info = {
-            # "DateTime": None,
-            "DateTimeOriginal": None,
-            # "DateTimeDigitized": None,
+        exif_data = img.getexif()
+        EXIF_IMAGE_FILE_DIRECTORY = 0x8769
+        EXIF_IMAGE_FILE_DIRECTORY_TAGS = {
+            "DateTimeOriginal": 36867,
+            "DateTimeDigitized": 36868,
         }
 
-        if exif_data:
-            for tag_id, value in exif_data.items():
-                tag = TAGS.get(tag_id, tag_id)
-                # Look for DateTime-related tags
-                if tag in datetime_info:
-                    datetime_info[tag] = value
+        exif_ifd = exif_data.get_ifd(EXIF_IMAGE_FILE_DIRECTORY)
+        date_time_orignial = exif_ifd.get(
+            EXIF_IMAGE_FILE_DIRECTORY_TAGS["DateTimeOriginal"]
+        )
 
-        return datetime_info
-    except Exception as e:
-        return {"Error": str(e)}
+        return date_time_orignial
+    except Exception as error:
+        print(f"Failed to get orignial photo date: {error}")
+        return None
 
 
-def convert_to_utc_format(exif_datetime: str) -> Optional[str]:
+def convert_to_filename_format(exif_datetime: str) -> Optional[str]:
     """
-    Convert EXIF datetime string to UTC format: yyyy-mm-dd-hh-mm-ss
+    Convert EXIF datetime string to filename format: yyyy-mm-dd-hh-mm-ss
     EXIF format is typically: "2024:03:15 14:30:22"
     """
     try:
         # Parse EXIF datetime format
         dt = datetime.strptime(exif_datetime, "%Y:%m:%d %H:%M:%S")
-        # Format to UTC format
+        # Format to filename format
         return dt.strftime("%Y-%m-%d-%H-%M-%S")
     except Exception:
         return None
