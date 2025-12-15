@@ -63,7 +63,7 @@ def process_folders(folder_paths: list[str], output_dir: str) -> None:
 
     total_copied = 0
     total_skipped = 0
-    filename_counter = {}  # Track duplicate filenames
+    filename_counter: dict[str, int] = {}  # Track duplicate filenames
 
     for folder_path in folder_paths:
         print(f"\n{'=' * 80}")
@@ -97,14 +97,9 @@ def process_folders(folder_paths: list[str], output_dir: str) -> None:
                         if formatted_date:
                             # Create filename with .jpeg extension
                             base_filename = formatted_date
-
-                            # Handle duplicate filenames
-                            if base_filename in filename_counter:
-                                filename_counter[base_filename] += 1
-                                new_filename = f"{base_filename}_{filename_counter[base_filename]}.jpeg"
-                            else:
-                                filename_counter[base_filename] = 0
-                                new_filename = f"{base_filename}.jpeg"
+                            new_filename = _generate_unique_filename(
+                                base_filename, filename_counter
+                            )
 
                             # Copy file to output directory
                             dest_path = os.path.join(output_dir, new_filename)
@@ -175,3 +170,24 @@ def convert_to_utc_format(exif_datetime: str) -> Optional[str]:
         return dt.strftime("%Y-%m-%d-%H-%M-%S")
     except Exception:
         return None
+
+
+def _generate_unique_filename(
+    base_filename: str, filename_counter: dict[str, int]
+) -> str:
+    """
+    Generate a unique filename, handling duplicates by appending a counter
+
+    Args:
+        base_filename: Base filename without extension
+        filename_counter: Dictionary tracking duplicate filenames
+
+    Returns:
+        str: Unique filename with .jpeg extension
+    """
+    if base_filename in filename_counter:
+        filename_counter[base_filename] += 1
+        return f"{base_filename}_{filename_counter[base_filename]}.jpeg"
+    else:
+        filename_counter[base_filename] = 0
+        return f"{base_filename}.jpeg"
