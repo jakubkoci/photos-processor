@@ -1,0 +1,1 @@
+- Use step-down rule when defining a method or function

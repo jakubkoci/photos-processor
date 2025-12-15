@@ -10,12 +10,47 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 from pathlib import Path
 from datetime import datetime
+from photo_stats import count_photo_orientations
 
 
 def main():
-    # Read folders from input file
-    input_file = "input"
+    if len(sys.argv) < 2:
+        print_usage()
+        sys.exit(1)
 
+    command = sys.argv[1].lower()
+
+    if command == "copy":
+        copy_photos()
+    elif command == "stats":
+        count_photo_orientations()
+    else:
+        print(f"⚠️  Unknown command: {command}")
+        print_usage()
+        sys.exit(1)
+
+
+def print_usage():
+    """
+    Print usage information for the script
+    """
+    print("Usage:")
+    print(
+        "  python main.py copy   - Copy photos to ordered folder with date-based renaming"
+    )
+    print(
+        "  python main.py stats  - Show orientation statistics for photos in ordered folder"
+    )
+
+
+def copy_photos(input_file="input", ordered_dir="ordered"):
+    """
+    Copy photos to an ordered folder and rename them based on DateTimeOriginal
+
+    Args:
+        input_file: Path to the input file containing folder paths (one per line)
+        ordered_dir: Directory where organized photos will be copied
+    """
     if not os.path.exists(input_file):
         print(f"⚠️  Input file '{input_file}' not found!")
         print("Please create an 'input' file with one folder path per line.")
@@ -30,7 +65,6 @@ def main():
         sys.exit(1)
 
     # Create ordered directory
-    ordered_dir = "ordered"
     os.makedirs(ordered_dir, exist_ok=True)
 
     print("Photo Organizer - Copy by DateTimeOriginal")
